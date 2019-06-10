@@ -6,6 +6,7 @@ import (
 	"log"
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 )
 
 type Article struct {
@@ -37,11 +38,46 @@ func singleArticle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func createNewArticle(w http.ResponseWriter, r *http.Request) {
+	requestBody, _ := ioutil.ReadAll(r.Body)
+	fmt.Println(requestBody)
+	var article Article
+	json.Unmarshal(requestBody, &article)
+	Articles = append(Articles, article)
+	json.NewEncoder(w).Encode(Articles)
+}
+
+func deleteArticle(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["id"]
+	for index, article := range Articles {
+		if article.Id == key {
+			Articles = append(Articles[:index], Articles[index+1:]...)
+		}
+	}
+}
+
+func updateArticle(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["id"]
+	requestBody, _ := ioutil.ReadAll(r.Body)
+	var newArticle Article
+	json.Unmarshal(requestBody, &newArticle)
+	for index, article := range Articles {
+		if article.Id == key {
+			Articles[index] = newArticle
+		}
+	}
+}
+
 func handleRequest() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/", homePage)
 	myRouter.HandleFunc("/articles", returnAllArticles)
-	myRouter.HandleFunc("/article/{id}", singleArticle)
+	myRouter.HandleFunc("/article/{id}", singleArticle).Methods("GET")
+	myRouter.HandleFunc("/article", createNewArticle).Methods("POST")
+	myRouter.HandleFunc("/article/{id}", deleteArticle).Methods("DELETE")
+	myRouter.HandleFunc("/article/{id}", updateArticle).Methods("PUT")
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 
