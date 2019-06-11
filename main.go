@@ -11,6 +11,7 @@ import (
 func handleRequest() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 	myRouter.HandleFunc("/api/user/new", controllers.CreateAccount).Methods("POST")
+	myRouter.HandleFunc("/api/user/login", controllers.Authenticate).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
 
